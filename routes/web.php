@@ -27,6 +27,8 @@ Route::resource('projects', ProjectController::class);
 Route::resource('projects.files', ProjectFileController::class)->shallow();
 Route::resource('projects.resultFiles', ResultFileController::class)->shallow();
 Route::get('/preview-excel/{filename}', [ProjectFileController::class, 'preview'])->name('excel.preview');
+Route::get('/download/{filename}', [ProjectFileController::class, 'download'])->name('download');
 Route::get('/preview-result/{filename}', [ResultFileController::class, 'preview'])->name('result.preview');
+Route::get('/download-result/{filename}', [ResultFileController::class, 'download'])->name('result_download');
 Route::post('/projects/{project}/files/sync', [ProjectFileController::class, 'syncAll'])->name('projects.files.syncAll');
 Route::post('/files/toggle-enabled', [ProjectFileController::class, 'toggleEnabled']);

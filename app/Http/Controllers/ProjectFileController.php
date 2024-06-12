@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\File;
 use App\Models\ResultFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,6 +27,20 @@ class ProjectFileController extends Controller
         // dd($project->files);
 
         return view('files.create', compact('project'));
+    }
+
+    public function download($filename)
+    {
+        $path = storage_path('app/uploads/projects/' . $filename);
+
+        if (!File::exists($path)) {
+            abort(404);
+        }
+
+        $file = File::get($path);
+        $type = File::mimeType($path);
+
+        return response()->download($path, $filename, ['Content-Type' => $type]);
     }
 
     public function store(Request $request, Project $project)

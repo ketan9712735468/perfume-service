@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
 use App\Models\ResultFile;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -12,6 +13,20 @@ class ResultFileController extends Controller
     {
         $resultFile->delete();
         return redirect()->back();
+    }
+
+    public function download($filename)
+    {
+        $path = storage_path('app/uploads/results/' . $filename);
+
+        if (!File::exists($path)) {
+            abort(404);
+        }
+
+        $file = File::get($path);
+        $type = File::mimeType($path);
+
+        return response()->download($path, $filename, ['Content-Type' => $type]);
     }
 
     public function preview($filename)
