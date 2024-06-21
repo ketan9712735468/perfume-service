@@ -98,7 +98,7 @@ class ProjectFileController extends Controller
 
     $mergeFileName = $request->input('mergeFileName');
     $files = $project->files()->where('enabled', true)->get();
-    $flaskApiUrl = 'http://127.0.0.1:5000/upload'; // Replace with your Flask API URL
+    $flaskApiUrl = 'https://perfume-api-9131.onrender.com/upload'; // Replace with your Flask API URL
     Log::debug('[][][][][][[][][][][][][][][][][][][');
     // Check if there are files to be sent
     if ($files->isEmpty()) {
