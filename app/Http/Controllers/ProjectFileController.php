@@ -91,64 +91,81 @@ class ProjectFileController extends Controller
 
     public function syncAll(Request $request, Project $project)
     {
-    Log::debug('====================================');
-    $request->validate([
-        'mergeFileName' => 'required|string|max:255',
-    ]);
-
-    $mergeFileName = $request->input('mergeFileName');
-    $files = $project->files()->where('enabled', true)->get();
-    $flaskApiUrl = 'https://perfume-api-9131.onrender.com/upload'; // Replace with your Flask API URL
-    Log::debug('[][][][][][[][][][][][][][][][][][][');
-    // Check if there are files to be sent
-    if ($files->isEmpty()) {
-        return response()->json(['message' => 'No files to synchronize.'], 400);
-    }
-    Log::debug('==================^^^^^^^^^^^==================');
-    $request = Http::asMultipart();
-
-    // Prepare the files to be sent
-    foreach ($files as $file) {
-        $filePath = storage_path("app/uploads/projects/" . $file->file);
-
-        // Check if the file exists before adding to the multipart data
-        if (!file_exists($filePath)) {
-            return response()->json(['message' => "File not found: {$filePath}"], 400);
-        }
-
-        $request = $request->attach(
-            'files', fopen($filePath, 'r'), $file->filename
-        );
-    }
-    Log::debug('=================$$$===================');
-    // Make the POST request to the Flask API
-    $response = $request->post($flaskApiUrl);
-
-    // Handle the response
-    if ($response->successful()) {
-        $contentDisposition = $response->header('Content-Disposition');
-        $fileName = $mergeFileName . '.xlsx';
-        Log::info("Extracted Filename: " . $fileName);
-
-        // Define the final storage path
-        $finalFilePath = ResultFile::$FOLDER_PATH . '/' . $fileName;
-
-        // Store the file directly in the final storage path
-        Storage::put($finalFilePath, $response->body());
-
-        // Create a new ResultFile record
-        $resultFile = ResultFile::create([
-            'project_id' => $project->id,
-            'file' => $fileName,
+        Log::debug('Starting syncAll function');
+        
+        // Validate the request
+        $request->validate([
+            'mergeFileName' => 'required|string|max:255',
         ]);
 
-        return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'results'])
-            ->with('success', 'All files synchronized successfully.');
-    } else {
-        // Handle error
-        return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
-            ->with('error', 'Failed to synchronize files.');
-    }
+        $mergeFileName = $request->input('mergeFileName');
+        $files = $project->files()->where('enabled', true)->get();
+        $flaskApiUrl = 'https://perfume-api-9131.onrender.com/upload'; // Replace with your Flask API URL
+        
+        Log::debug('Checked files and mergeFileName', ['mergeFileName' => $mergeFileName, 'fileCount' => $files->count()]);
+
+        // Check if there are files to be sent
+        if ($files->isEmpty()) {
+            Log::warning('No files to synchronize');
+            return response()->json(['message' => 'No files to synchronize.'], 400);
+        }
+
+        $request = Http::asMultipart()->timeout(120); // Increase timeout to 120 seconds
+
+        // Prepare the files to be sent
+        foreach ($files as $file) {
+            $filePath = storage_path("app/uploads/projects/" . $file->file);
+            Log::debug('Processing file', ['filePath' => $filePath]);
+
+            // Check if the file exists before adding to the multipart data
+            if (!file_exists($filePath)) {
+                Log::error('File not found', ['filePath' => $filePath]);
+                return response()->json(['message' => "File not found: {$filePath}"], 400);
+            }
+
+            $request = $request->attach(
+                'files', fopen($filePath, 'r'), $file->filename
+            );
+        }
+
+        Log::debug('All files attached. Sending request to Flask API');
+
+        // Make the POST request to the Flask API
+        try {
+            $response = $request->post($flaskApiUrl);
+
+            // Handle the response
+            if ($response->successful()) {
+                $contentDisposition = $response->header('Content-Disposition');
+                $fileName = $mergeFileName . '.xlsx';
+                Log::info("Extracted Filename", ['fileName' => $fileName]);
+
+                // Define the final storage path
+                $finalFilePath = ResultFile::$FOLDER_PATH . '/' . $fileName;
+
+                // Store the file directly in the final storage path
+                Storage::put($finalFilePath, $response->body());
+
+                // Create a new ResultFile record
+                $resultFile = ResultFile::create([
+                    'project_id' => $project->id,
+                    'file' => $fileName,
+                ]);
+
+                Log::info('File synchronized successfully', ['finalFilePath' => $finalFilePath]);
+
+                return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'results'])
+                    ->with('success', 'All files synchronized successfully.');
+            } else {
+                Log::error('Failed to synchronize files', ['response' => $response->body()]);
+                return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
+                    ->with('error', 'Failed to synchronize files.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception occurred during synchronization', ['exception' => $e->getMessage()]);
+            return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
+                ->with('error', 'Exception occurred during synchronization.');
+        }
     }
 
     public function toggleEnabled(Request $request)
