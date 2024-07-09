@@ -112,6 +112,11 @@
 </div>
 
 
+<!-- Loading Indicator -->
+<div id="loadingIndicator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="loader"></div> <!-- You can use a CSS spinner here -->
+</div>
+
 <script>
     function openModal(deleteUrl) {
         document.getElementById('deleteForm').action = deleteUrl;
@@ -122,9 +127,11 @@
         document.getElementById('deleteModal').classList.add('hidden');
     }
     function openExcelModal(previewUrl) {
+        document.getElementById('loadingIndicator').classList.remove('hidden');
         fetch(previewUrl)
             .then(response => response.json())
             .then(data => {
+                document.getElementById('loadingIndicator').classList.add('hidden');
                 if (data.error) {
                     alert(data.error);
                 } else {
@@ -133,6 +140,7 @@
                 }
             })
             .catch(error => {
+                document.getElementById('loadingIndicator').classList.add('hidden');
                 console.error('Error fetching preview:', error);
             });
     }

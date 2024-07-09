@@ -109,8 +109,8 @@ class ProjectFileController extends Controller
             Log::warning('No files to synchronize');
             return response()->json(['message' => 'No files to synchronize.'], 400);
         }
-
-        $request = Http::asMultipart()->timeout(120); // Increase timeout to 120 seconds
+        
+        $request = Http::asMultipart()->timeout(0); // Increase timeout to 120 seconds
 
         // Prepare the files to be sent
         foreach ($files as $file) {
