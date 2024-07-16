@@ -20,6 +20,18 @@
                                             </svg>
                                             Back
                                         </a>
+                                        <h1 class="text-2xl font-semibold text-gray-900 ml-4">Upload only Inventory Files for {{ $project->name }}</h1>
+                                    </div>
+                                </div>
+
+                                <form action="{{ route('projects.inventory.store', $project) }}" method="POST" enctype="multipart/form-data" class="dropzone mb-6" id="file-dropzone" style="border: 2px dashed #ccc; padding: 20px; border-radius: 8px;">
+                                    @csrf
+                                    <div class="dz-message" data-dz-message>
+                                        <span>Drop files here or click to upload</span>
+                                    </div>
+                                </form>
+
+                                <div class="flex justify-between items-center mb-6">
                                         <h1 class="text-2xl font-semibold text-gray-900 ml-4">Upload Files for {{ $project->name }}</h1>
                                     </div>
                                 </div>
@@ -44,7 +56,7 @@
                                             @foreach($project->files as $project_file)
                                                 <tr class="border-b border-gray-200 hover:bg-gray-100">
                                                     <td class="py-4 px-6">
-                                                        <span>{{ $project_file->file }}</span>
+                                                        <span>{{ $project_file->original_name }}</span>
                                                     </td>
                                                     <td class="py-4 px-6">
                                                         <span>{{ $project_file->created_at }}</span>

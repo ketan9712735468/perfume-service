@@ -37,7 +37,7 @@
                                                     <span>{{ $project->description }}</span>
                                                 </td>
                                                 <td class="py-3 px-6 text-center">
-                                                    <span>{{ $project->files->count() }}</span>
+                                                    <span>{{ $project->files->count() + $project->inventories->count() }}</span>
                                                 </td>
                                                 <td class="py-4 px-6 align-start text-center">
                                                     <div class="inline-flex items-center space-x-4">

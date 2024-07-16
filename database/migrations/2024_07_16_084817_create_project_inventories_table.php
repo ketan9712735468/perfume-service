@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('project_files', function (Blueprint $table) {
+        Schema::create('project_inventories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
             $table->string('file');
             $table->string('original_name');
-            $table->boolean('enabled')->default(true);
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('project_files');
+        Schema::dropIfExists('project_inventories');
     }
 };

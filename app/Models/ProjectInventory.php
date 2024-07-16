@@ -4,15 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
-class ProjectFile extends Model
+class ProjectInventory extends Model
 {
     use HasFactory;
+
     protected $fillable = ['project_id', 'file', 'original_name'];
 
     protected $appends = ['file_url'];
 
-    public static string $FOLDER_PATH = 'uploads/projects';
+    public static string $FOLDER_PATH = 'uploads/project_inventories';
     public static int $FILE_SIZE = 2; // MB
 
     public function getFileUrlAttribute(): ?string
@@ -24,9 +26,9 @@ class ProjectFile extends Model
         return null;
     }
 
-
     public function project()
     {
         return $this->belongsTo(Project::class);
     }
 }
+

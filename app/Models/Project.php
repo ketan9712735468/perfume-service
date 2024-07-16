@@ -19,4 +19,9 @@ class Project extends Model
     {
         return $this->hasMany(ResultFile::class);
     }
+
+    public function inventories()
+    {
+        return $this->hasMany(ProjectInventory::class);
+    }
 }

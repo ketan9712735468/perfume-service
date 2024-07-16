@@ -53,11 +53,13 @@ class ProjectFileController extends Controller
             $file = $request->file('file');
 
             $extension = $file->getClientOriginalExtension();
+            $originalFileName = $file->getClientOriginalName();
             $fileName = 'projects_' . time() . '_' . Str::random(10) . '.' . $extension;
             $file->storeAs(ProjectFile::$FOLDER_PATH, $fileName);
 
             $project->files()->create([
                 'file' => $fileName,
+                'original_name' => $originalFileName,
             ]);
         }
         
