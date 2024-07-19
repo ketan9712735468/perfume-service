@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class ResultFile extends Model
 {
     use HasFactory;
-    protected $fillable = ['project_id', 'file'];
+    protected $fillable = ['project_id', 'file', 'original_name'];
 
     protected $appends = ['file_url'];
 

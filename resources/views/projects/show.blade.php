@@ -148,7 +148,7 @@
                                                 @foreach($project->resultFiles->sortByDesc('created_at') as $resultFile)
                                                     <tr class="border-b border-gray-200 hover:bg-gray-100">
                                                         <td class="py-4 px-6">
-                                                            <span>{{ $resultFile->file }}</span>
+                                                            <span>{{ $resultFile->original_name }}</span>
                                                         </td>
                                                         <td class="py-4 px-6">
                                                             <span>{{ $resultFile->created_at }}</span>

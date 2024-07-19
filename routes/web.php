@@ -7,6 +7,7 @@ use App\Http\Controllers\ResultFileController;
 use App\Http\Controllers\ProjectInventoryController;
 use App\Models\Project;
 use App\Models\ProjectFile;
+use App\Models\ProjectInventory;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -20,7 +21,9 @@ Route::middleware([
     Route::get('/dashboard', function () {
         $projects = Project::with('files')->get();
         $totalFilesCount = ProjectFile::count();
-        return view('dashboard', compact('projects', 'totalFilesCount'));
+        $totalInventorysCount = ProjectInventory::count();
+        $totalCount = $totalFilesCount + $totalInventorysCount;
+        return view('dashboard', compact('projects', 'totalCount'));
     })->name('dashboard');
 });
 

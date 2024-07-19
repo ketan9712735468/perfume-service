@@ -74,21 +74,21 @@ class ProjectFileController extends Controller
 
     public function preview($filename)
     {
-    $filePath = storage_path('app/uploads/projects/' . $filename);
+        $filePath = storage_path('app/uploads/projects/' . $filename);
 
-    try {
-        $spreadsheet = IOFactory::load($filePath);
-        $worksheet = $spreadsheet->getActiveSheet();
-        $data = $worksheet->toArray();
-    } catch (\Exception $e) {
-        // Handle the exception if the file cannot be read
-        return response()->json(['error' => 'Unable to read the file.'], 500);
-    }
+        try {
+            $spreadsheet = IOFactory::load($filePath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            $data = $worksheet->toArray();
+        } catch (\Exception $e) {
+            // Handle the exception if the file cannot be read
+            return response()->json(['error' => 'Unable to read the file.'], 500);
+        }
 
-    // Render the HTML content of the preview
-    $htmlContent = view('files.preview', compact('data'))->render();
+        // Render the HTML content of the preview
+        $htmlContent = view('files.preview', compact('data'))->render();
 
-    return response()->json(['html' => $htmlContent]);
+        return response()->json(['html' => $htmlContent]);
     }
 
     public function syncAll(Request $request, Project $project)
@@ -102,17 +102,34 @@ class ProjectFileController extends Controller
 
         $mergeFileName = $request->input('mergeFileName');
         $files = $project->files()->where('enabled', true)->get();
-        $flaskApiUrl = 'https://perfume-api-9131.onrender.com/upload'; // Replace with your Flask API URL
-        
-        Log::debug('Checked files and mergeFileName', ['mergeFileName' => $mergeFileName, 'fileCount' => $files->count()]);
+        $inventories = $project->inventories()->get();
+        // $flaskApiUrl = 'http://127.0.0.1:5000/upload'; // Local Flask API URL
+        $flaskApiUrl = "https://perfume-api-9131.onrender.com/upload";
+        Log::debug('Checked files and mergeFileName', ['mergeFileName' => $mergeFileName, 'fileCount' => $files->count(), 'inventoryCount' => $inventories->count()]);
 
-        // Check if there are files to be sent
-        if ($files->isEmpty()) {
-            Log::warning('No files to synchronize');
-            return response()->json(['message' => 'No files to synchronize.'], 400);
+        // Check if there are files and inventories to be sent
+        if ($files->isEmpty() && $inventories->isEmpty()) {
+            Log::warning('No files or inventories to synchronize');
+            return response()->json(['message' => 'No files or inventories to synchronize.'], 400);
         }
-        
-        $request = Http::asMultipart()->timeout(0); // Increase timeout to 120 seconds
+
+        $http = Http::asMultipart()->timeout(0);
+
+        // Prepare the inventories to be sent
+        foreach ($inventories as $inventory) {
+            $filePath = storage_path("app/uploads/project_inventories/" . $inventory->file);
+            Log::debug('Processing inventory file', ['filePath' => $filePath]);
+
+            // Check if the file exists before adding to the multipart data
+            if (!file_exists($filePath)) {
+                Log::error('File not found', ['filePath' => $filePath]);
+                return response()->json(['message' => "File not found: {$filePath}"], 400);
+            }
+
+            $http = $http->attach(
+                'inventory', fopen($filePath, 'r'), $inventory->original_name
+            );
+        }
 
         // Prepare the files to be sent
         foreach ($files as $file) {
@@ -125,8 +142,8 @@ class ProjectFileController extends Controller
                 return response()->json(['message' => "File not found: {$filePath}"], 400);
             }
 
-            $request = $request->attach(
-                'files', fopen($filePath, 'r'), $file->filename
+            $http = $http->attach(
+                'files', fopen($filePath, 'r'), $file->original_name
             );
         }
 
@@ -134,12 +151,11 @@ class ProjectFileController extends Controller
 
         // Make the POST request to the Flask API
         try {
-            $response = $request->post($flaskApiUrl);
+            $response = $http->post($flaskApiUrl);
 
             // Handle the response
             if ($response->successful()) {
-                $contentDisposition = $response->header('Content-Disposition');
-                $fileName = $mergeFileName . '.xlsx';
+                $fileName = 'projects_' . time() . '_' . Str::random(10) . '.xlsx';
                 Log::info("Extracted Filename", ['fileName' => $fileName]);
 
                 // Define the final storage path
@@ -152,6 +168,7 @@ class ProjectFileController extends Controller
                 $resultFile = ResultFile::create([
                     'project_id' => $project->id,
                     'file' => $fileName,
+                    'original_name' => $mergeFileName . '.xlsx'
                 ]);
 
                 Log::info('File synchronized successfully', ['finalFilePath' => $finalFilePath]);
