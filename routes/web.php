@@ -19,9 +19,20 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', function () {
-        $projects = Project::with('files')->get();
-        $totalFilesCount = ProjectFile::count();
-        $totalInventorysCount = ProjectInventory::count();
+        $team = Auth::user()->currentTeam;
+        $projects = Project::with('files')
+            ->where('team_id', $team->id)
+            ->get();
+        $totalFilesCount = ProjectFile::whereHas('project', function ($query) use ($team) {
+            $query->where('team_id', $team->id);
+        })->count();
+
+        // Count the total inventories for the current team
+        $totalInventorysCount = ProjectInventory::whereHas('project', function ($query) use ($team) {
+            $query->where('team_id', $team->id);
+        })->count();
+
+        // Calculate the total count
         $totalCount = $totalFilesCount + $totalInventorysCount;
         return view('dashboard', compact('projects', 'totalCount'));
     })->name('dashboard');

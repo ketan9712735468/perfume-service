@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\ProjectFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -24,8 +25,16 @@ class ProjectFileController extends Controller
 
     public function create(Project $project)
     {
-        // dd($project->files);
+        // Get the authenticated user
+        $user = Auth::user();
+        
+        // Get the current team of the user
+        $currentTeam = $user->currentTeam;
 
+        // Ensure the user has a current team and it matches the project's team_id
+        if (!$currentTeam || $currentTeam->id !== $project->team_id) {
+            abort(403, 'You do not have access to this project.');
+        }
         return view('files.create', compact('project'));
     }
 

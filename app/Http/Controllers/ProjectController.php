@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Project;
 
@@ -12,7 +12,8 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $projects = Project::all();
+        $user_team = Auth::user()->currentTeam;
+        $projects = Project::where('team_id', $user_team->id)->get();
         return view('projects.index', compact('projects'));
     }
 
@@ -29,12 +30,19 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+        $currentTeam = $user->currentTeam;
         $request->validate([
             'name' => 'required',
             'description' => 'nullable',
         ]);
 
-        $project = Project::create($request->all());
+        // Create the project with the team_id
+        $project = Project::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'team_id' => $currentTeam->id,
+        ]);
         return redirect()->route('projects.show', $project->id);
     }
 
@@ -43,6 +51,17 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
+        // Get the authenticated user
+        $user = Auth::user();
+        
+        // Get the current team of the user
+        $currentTeam = $user->currentTeam;
+
+        // Ensure the user has a current team and it matches the project's team_id
+        if (!$currentTeam || $currentTeam->id !== $project->team_id) {
+            abort(403, 'You do not have access to this project.');
+        }
+
         return view('projects.show', compact('project'));
     }
 
