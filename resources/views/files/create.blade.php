@@ -32,8 +32,7 @@
                                 </form>
 
                                 <div class="flex justify-between items-center mb-6">
-                                        <h1 class="text-2xl font-semibold text-gray-900 ml-4">Upload Files for {{ $project->name }}</h1>
-                                    </div>
+                                    <h1 class="text-2xl font-semibold text-gray-900 ml-4">Upload Files for {{ $project->name }}</h1>
                                 </div>
 
                                 <form action="{{ route('projects.files.store', $project) }}" method="POST" enctype="multipart/form-data" class="dropzone mb-6" id="file-dropzone" style="border: 2px dashed #ccc; padding: 20px; border-radius: 8px;">
@@ -86,9 +85,10 @@
                                         </tbody>
                                     </table>
                                 </div>
+
                                 <!-- Close Button at the Bottom -->
                                 <div class="flex justify-end mb-6">
-                                    <a href="{{ route('projects.show', $project->id) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                    <a href="{{ route('projects.show', $project->id) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition ease-in-out duration-150">
                                         {{ __('Close') }}
                                     </a>
                                 </div>
@@ -99,74 +99,73 @@
             </div>
         </div>
     </div>
-</div>
-<!-- Modal -->
-<div id="deleteModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-auto">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Confirm Deletion</h2>
-        <p class="text-gray-700 mb-6">Are you sure you want to delete this project?</p>
-        <div class="flex justify-end">
-            <button onclick="closeModal()" class="inline-flex items-center px-4 py-2 mr-4 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition ease-in-out duration-150">Cancel</button>
-            <form id="deleteForm" method="POST">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="inline-flex items-center justify-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">Delete</button>
-            </form>
+
+    <!-- Modal -->
+    <div id="deleteModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-auto">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Confirm Deletion</h2>
+            <p class="text-gray-700 mb-6">Are you sure you want to delete this project?</p>
+            <div class="flex justify-end">
+                <button onclick="closeModal()" class="inline-flex items-center px-4 py-2 mr-4 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition ease-in-out duration-150">Cancel</button>
+                <form id="deleteForm" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="inline-flex items-center justify-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">Delete</button>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Excel Preview Modal -->
-<div id="excelPreviewModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">Excel Preview</h2>
-            <button onclick="closeExcelModal()" class="text-gray-900 hover:text-gray-700">&times;</button>
-        </div>
-        <div id="excelPreviewContent" class="w-full h-96 overflow-auto">
-            <!-- Excel content will be injected here -->
+    <!-- Excel Preview Modal -->
+    <div id="excelPreviewModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">Excel Preview</h2>
+                <button onclick="closeExcelModal()" class="text-gray-900 hover:text-gray-700">&times;</button>
+            </div>
+            <div id="excelPreviewContent" class="w-full h-96 overflow-auto">
+                <!-- Excel content will be injected here -->
+            </div>
         </div>
     </div>
-</div>
 
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="loader"></div> <!-- You can use a CSS spinner here -->
+    </div>
 
-<!-- Loading Indicator -->
-<div id="loadingIndicator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="loader"></div> <!-- You can use a CSS spinner here -->
-</div>
+    <script>
+        function openModal(deleteUrl) {
+            document.getElementById('deleteForm').action = deleteUrl;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
 
-<script>
-    function openModal(deleteUrl) {
-        document.getElementById('deleteForm').action = deleteUrl;
-        document.getElementById('deleteModal').classList.remove('hidden');
-    }
+        function closeModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
 
-    function closeModal() {
-        document.getElementById('deleteModal').classList.add('hidden');
-    }
-    function openExcelModal(previewUrl) {
-        document.getElementById('loadingIndicator').classList.remove('hidden');
-        fetch(previewUrl)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('loadingIndicator').classList.add('hidden');
-                if (data.error) {
-                    alert(data.error);
-                } else {
-                    document.getElementById('excelPreviewContent').innerHTML = data.html;
-                    document.getElementById('excelPreviewModal').classList.remove('hidden');
-                }
-            })
-            .catch(error => {
-                document.getElementById('loadingIndicator').classList.add('hidden');
-                console.error('Error fetching preview:', error);
-            });
-    }
+        function openExcelModal(previewUrl) {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            fetch(previewUrl)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        document.getElementById('excelPreviewContent').innerHTML = data.html;
+                        document.getElementById('excelPreviewModal').classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                    console.error('Error fetching preview:', error);
+                });
+        }
 
-    function closeExcelModal() {
-        document.getElementById('excelPreviewContent').innerHTML = ''; // Clear the content
-        document.getElementById('excelPreviewModal').classList.add('hidden');
-    }
-
-</script>
+        function closeExcelModal() {
+            document.getElementById('excelPreviewContent').innerHTML = ''; // Clear the content
+            document.getElementById('excelPreviewModal').classList.add('hidden');
+        }
+    </script>
 </x-app-layout>

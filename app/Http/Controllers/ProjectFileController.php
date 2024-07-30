@@ -103,8 +103,8 @@ class ProjectFileController extends Controller
         $mergeFileName = $request->input('mergeFileName');
         $files = $project->files()->where('enabled', true)->get();
         $inventories = $project->inventories()->get();
-        // $flaskApiUrl = 'http://127.0.0.1:5000/upload'; // Local Flask API URL
-        $flaskApiUrl = "https://perfume-api-9131.onrender.com/upload";
+        $flaskApiUrl = 'http://127.0.0.1:5000/upload'; // Local Flask API URL
+        // $flaskApiUrl = "https://perfume-api-9131.onrender.com/upload";
         Log::debug('Checked files and mergeFileName', ['mergeFileName' => $mergeFileName, 'fileCount' => $files->count(), 'inventoryCount' => $inventories->count()]);
 
         // Check if there are files and inventories to be sent
