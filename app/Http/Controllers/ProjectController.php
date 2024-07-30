@@ -34,8 +34,8 @@ class ProjectController extends Controller
             'description' => 'nullable',
         ]);
 
-        Project::create($request->all());
-        return redirect()->route('projects.index');
+        $project = Project::create($request->all());
+        return redirect()->route('projects.show', $project->id);
     }
 
     /**

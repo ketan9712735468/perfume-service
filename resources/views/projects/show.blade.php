@@ -141,6 +141,7 @@
                                                 <tr>
                                                     <th class="py-4 px-6 bg-gray-100 font-bold uppercase text-sm text-gray-700 border-b border-gray-200">Result File</th>
                                                     <th class="py-4 px-6 bg-gray-100 font-bold uppercase text-sm text-gray-700 border-b border-gray-200">Date</th>
+                                                    <th class="py-4 px-6 bg-gray-100 font-bold uppercase text-sm text-gray-700 border-b border-gray-200">Time</th>
                                                     <th class="py-4 px-6 bg-gray-100 font-bold uppercase text-sm text-gray-700 border-b border-gray-200 text-center">Actions</th>
                                                 </tr>
                                             </thead>
@@ -151,7 +152,10 @@
                                                             <span>{{ $resultFile->original_name }}</span>
                                                         </td>
                                                         <td class="py-4 px-6">
-                                                            <span>{{ $resultFile->created_at }}</span>
+                                                            <span>{{ $resultFile->created_at->format('Y-m-d') }}</span>
+                                                        </td>
+                                                        <td class="py-4 px-6">
+                                                        <span>{{ $resultFile->created_at->format('H:i:s') }}</span>
                                                         </td>
                                                         <td class="py-4 px-6 align-center text-center">
                                                             <div class="inline-flex items-center space-x-4">
@@ -203,11 +207,6 @@
         </div>
     </div>
 
-<!-- Loading Indicator -->
-<div id="loadingIndicator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="loader"></div> <!-- You can use a CSS spinner here -->
-</div>
-
 <!-- Excel Preview Modal -->
 <div id="excelPreviewModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
     <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
@@ -226,7 +225,7 @@
     <div class="bg-white rounded-lg shadow-xl overflow-hidden transform transition-all sm:w-full sm:max-w-2xl">
         <div class="px-4 py-5 sm:p-6">
             <h2 class="text-lg leading-6 font-medium text-gray-900 mb-4">Merge Files</h2>
-            <form id="mergeFilesForm" method="POST" action="{{ route('projects.files.syncAll', $project) }}">
+            <form id="mergeFilesForm" method="POST" action="{{ route('projects.files.syncAll', $project) }}" onsubmit="showLoader()">
                 @csrf
                 <div class="mb-6">
                     <label for="mergeFileName" class="block text-gray-700 mb-2">File Name</label>
@@ -243,6 +242,11 @@
             </form>
         </div>
     </div>
+</div>
+
+<!-- Modal for Loader -->
+<div id="loadingIndicator" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="loader"></div>
 </div>
 
 <script>
@@ -285,6 +289,10 @@
 
     function closeMergeModal() {
         document.getElementById('mergeFilesModal').classList.add('hidden');
+    }
+
+    function showLoader() {
+        document.getElementById('loadingIndicator').classList.remove('hidden');
     }
 </script>
 </x-app-layout>
