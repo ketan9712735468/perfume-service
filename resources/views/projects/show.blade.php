@@ -36,6 +36,32 @@
                                     </a>
                                 </div>
 
+                                <!-- Display error messages -->
+                                @if(session('error'))
+                                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded-md shadow-sm">
+                                    <div class="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3a1.5 1.5 0 1 1 3 0v12a1.5 1.5 0 1 1-3 0V3zm-1.5 12a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z" />
+                                        </svg>
+                                        <p class="text-sm">{{ session('error') }}</p>
+                                    </div>
+                                </div>
+                                @endif
+
+
+                                <!-- Display success messages (optional) -->
+                                @if(session('success'))
+                                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded-md shadow-sm">
+                                    <div class="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-3">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 4.5l-11.25 11.25-4.5-4.5m-1.5-1.5l6-6L20.25 4.5z" />
+                                        </svg>
+                                        <p class="text-sm">{{ session('success') }}</p>
+                                    </div>
+                                </div>
+                                @endif
+
+
                                 @if(request('type', 'files') === 'files')
                                     <div class="bg-white shadow-md rounded my-6">
                                         <table class="text-left w-full border-collapse">

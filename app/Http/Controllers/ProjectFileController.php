@@ -119,7 +119,8 @@ class ProjectFileController extends Controller
         // Check if there are files and inventories to be sent
         if ($files->isEmpty() && $inventories->isEmpty()) {
             Log::warning('No files or inventories to synchronize');
-            return response()->json(['message' => 'No files or inventories to synchronize.'], 400);
+            return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
+                ->with('error', 'No files or inventories to synchronize.');
         }
 
         $http = Http::asMultipart()->timeout(0);
@@ -132,7 +133,8 @@ class ProjectFileController extends Controller
             // Check if the file exists before adding to the multipart data
             if (!file_exists($filePath)) {
                 Log::error('File not found', ['filePath' => $filePath]);
-                return response()->json(['message' => "File not found: {$filePath}"], 400);
+                return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
+                    ->with('error', "File not found: {$filePath}");
             }
 
             $http = $http->attach(
@@ -148,7 +150,8 @@ class ProjectFileController extends Controller
             // Check if the file exists before adding to the multipart data
             if (!file_exists($filePath)) {
                 Log::error('File not found', ['filePath' => $filePath]);
-                return response()->json(['message' => "File not found: {$filePath}"], 400);
+                return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
+                    ->with('error', "File not found: {$filePath}");
             }
 
             $http = $http->attach(
@@ -192,7 +195,7 @@ class ProjectFileController extends Controller
         } catch (\Exception $e) {
             Log::error('Exception occurred during synchronization', ['exception' => $e->getMessage()]);
             return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
-                ->with('error', 'Exception occurred during synchronization.');
+                ->with('error', 'An exception occurred during synchronization.');
         }
     }
 
