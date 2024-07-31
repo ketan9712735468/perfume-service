@@ -199,6 +199,94 @@ class ProjectFileController extends Controller
         }
     }
 
+    public function manualSync(Request $request, Project $project)
+    {
+        // Retrieve the common columns selected
+        $commonColumns = $request->input('commonColumn');
+        
+        // Retrieve the file columns selected
+        $fileColumns = $request->input('columns');
+        
+        // Retrieve the merge file name
+        $mergeFileName = $request->input('mergeFileName');
+
+        // Prepare the data for the API call
+        $data = [
+            'commonColumns' => $commonColumns,
+            'fileColumns' => $fileColumns,
+        ];
+
+        Log::info('Data prepared for API call', ['data' => $data]);
+
+        // Retrieve the files to attach
+        $files = $project->files()->where('enabled', true)->get();
+
+        // Initialize HTTP client
+        $http = Http::asMultipart()->timeout(0);
+
+        // Attach additional data to the request
+        $http->attach('commonColumns', json_encode($data['commonColumns']));
+        $http->attach('fileColumns', json_encode($data['fileColumns']));
+        
+        // Prepare the multipart data
+        foreach ($files as $file) {
+            $filePath = storage_path("app/uploads/projects/" . $file->file);
+            Log::debug('Processing file', ['filePath' => $filePath]);
+
+            // Check if the file exists before adding to the multipart data
+            if (!file_exists($filePath)) {
+                Log::error('File not found', ['filePath' => $filePath]);
+                return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
+                    ->with('error', "File not found: {$filePath}");
+            }
+
+            // Attach each file to the request
+            $http->attach(
+                'files[]', fopen($filePath, 'r'), $file->original_name
+            );
+        }
+
+        $flaskApiUrl = 'http://127.0.0.1:5000/manual-upload'; // Local Flask API URL
+
+        try {
+            // Send the POST request
+            $response = $http->post($flaskApiUrl);
+
+            // Handle the response
+            if ($response->successful()) {
+                $fileName = 'projects_' . time() . '_' . Str::random(10) . '.xlsx';
+                Log::info("Extracted Filename", ['fileName' => $fileName]);
+
+                // Define the final storage path
+                $finalFilePath = 'results/' . $fileName;
+
+                // Store the file directly in the final storage path
+                Storage::put($finalFilePath, $response->body());
+
+                // Create a new ResultFile record
+                $resultFile = ResultFile::create([
+                    'project_id' => $project->id,
+                    'file' => $fileName,
+                    'original_name' => $mergeFileName . '.xlsx'
+                ]);
+
+                Log::info('File synchronized successfully', ['finalFilePath' => $finalFilePath]);
+
+                return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'results'])
+                    ->with('success', 'All files synchronized successfully.');
+            } else {
+                Log::error('Failed to synchronize files', ['response' => $response->body()]);
+                return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
+                    ->with('error', 'Failed to synchronize files. ' . $response->body());
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception occurred during synchronization', ['exception' => $e->getMessage()]);
+            return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
+                ->with('error', 'An exception occurred during synchronization.');
+        }
+    }
+
+
     public function toggleEnabled(Request $request)
     {
         $file = ProjectFile::find($request->file_id);

@@ -47,6 +47,7 @@ Route::get('/download/{filename}', [ProjectFileController::class, 'download'])->
 Route::get('/preview-result/{filename}', [ResultFileController::class, 'preview'])->name('result.preview');
 Route::get('/download-result/{filename}', [ResultFileController::class, 'download'])->name('result_download');
 Route::post('/projects/{project}/files/sync', [ProjectFileController::class, 'syncAll'])->name('projects.files.syncAll');
+Route::post('/projects/{project}/files/manual-sync', [ProjectFileController::class, 'manualSync'])->name('projects.files.manualSync');
 Route::post('/files/toggle-enabled', [ProjectFileController::class, 'toggleEnabled']);
 Route::get('/preview-inventory/{filename}', [ProjectInventoryController::class, 'preview'])->name('inventory.preview');
 Route::get('/download-inventory/{filename}', [ProjectInventoryController::class, 'download'])->name('inventory_download');

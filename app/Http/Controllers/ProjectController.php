@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Project;
+use App\Models\ProjectFile;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ProjectController extends Controller
 {
@@ -61,8 +64,38 @@ class ProjectController extends Controller
         if (!$currentTeam || $currentTeam->id !== $project->team_id) {
             abort(403, 'You do not have access to this project.');
         }
+    
+        // Fetch all project files
+        $files = $project->files; // Adjust based on your actual relationship
+    
+        // Get columns for each file
+        $fileDetails = [];
+        foreach ($files as $file) {
+            $path = storage_path('app/uploads/projects/' . $file->file);
+            $extension = pathinfo($path, PATHINFO_EXTENSION);
+            $header = [];
 
-        return view('projects.show', compact('project'));
+            if ($extension === 'csv') {
+                $csv = Reader::createFromPath($path, 'r');
+                $csv->setHeaderOffset(0); // Set to 0 for CSV with headers
+                $header = $csv->getHeader();
+            } elseif (in_array($extension, ['xls', 'xlsx'])) {
+                $spreadsheet = IOFactory::load($path);
+                $sheet = $spreadsheet->getActiveSheet();
+                $header = $sheet->rangeToArray('1:1')[0]; // Read the first row as header
+            }
+
+            // Filter out empty columns
+            $fileDetails[] = [
+                'id' => $file->id,
+                'original_name' => $file->original_name,
+                'columns' => array_filter($header, function ($column) {
+                    return !empty(trim($column));
+                }),
+            ];
+        }
+        // Render the project view
+        return view('projects.show', compact('project', 'fileDetails'));
     }
 
     /**
