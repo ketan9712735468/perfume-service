@@ -181,7 +181,7 @@
                                                             <span>{{ $resultFile->created_at->format('Y-m-d') }}</span>
                                                         </td>
                                                         <td class="py-4 px-6">
-                                                        <span>{{ $resultFile->created_at->format('H:i:s') }}</span>
+                                                        <span>{{ $resultFile->created_at->format('H:i') }}</span>
                                                         </td>
                                                         <td class="py-4 px-6 align-center text-center">
                                                             <div class="inline-flex items-center space-x-4">

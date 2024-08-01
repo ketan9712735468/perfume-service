@@ -203,7 +203,7 @@ class ProjectFileController extends Controller
     {
         // Retrieve the common columns selected
         $commonColumns = $request->input('commonColumn');
-        
+
         // Retrieve the file columns selected
         $fileColumns = $request->input('columns');
         
@@ -242,7 +242,7 @@ class ProjectFileController extends Controller
 
             // Attach each file to the request
             $http->attach(
-                'files[]', fopen($filePath, 'r'), $file->original_name
+                'files', fopen($filePath, 'r'), $file->original_name
             );
         }
 
@@ -258,7 +258,7 @@ class ProjectFileController extends Controller
                 Log::info("Extracted Filename", ['fileName' => $fileName]);
 
                 // Define the final storage path
-                $finalFilePath = 'results/' . $fileName;
+                $finalFilePath = ResultFile::$FOLDER_PATH . '/' . $fileName;
 
                 // Store the file directly in the final storage path
                 Storage::put($finalFilePath, $response->body());
