@@ -269,6 +269,7 @@
                     </div>
                 </form>
             @else
+            <div id="validationError" class="text-red-600 mb-4" style="display: none;"></div>
             <form id="selectFilesForm" method="POST" action="{{ route('projects.files.manualSync', $project) }}" onsubmit="showLoader()">
                 @csrf
                 <div id="filesSelection" class="space-y-4">
@@ -372,28 +373,80 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-    // Get all file dropdown containers
+    const form = document.getElementById('selectFilesForm');
     const fileDropdowns = document.querySelectorAll('#filesSelection .mb-6');
+    const validationError = document.getElementById('validationError');
+
+    function validateForm() {
+        const commonColumnValues = new Set();
+        let allSelected = true;
+
+        fileDropdowns.forEach(fileDiv => {
+            const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
+            const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
+            const selectedCommonColumn = commonColumnSelect.value;
+
+            if (selectedCommonColumn) {
+                commonColumnValues.add(selectedCommonColumn);
+            } else {
+                allSelected = false;
+            }
+        });
+
+        if (!allSelected) {
+            validationError.textContent = 'Please select a common column for all files.';
+            validationError.style.display = 'block';
+            return false;
+        }
+
+        if (commonColumnValues.size > 1) {
+            validationError.textContent = 'All selected common columns must be the same.';
+            validationError.style.display = 'block';
+            return false;
+        } else {
+            validationError.style.display = 'none';
+            return true;
+        }
+    }
+
+    form.addEventListener('submit', (event) => {
+        if (!validateForm()) {
+            event.preventDefault(); // Prevent form submission if validation fails
+        }
+    });
 
     fileDropdowns.forEach(fileDiv => {
-        // Get the file ID from the hidden input field
         const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
         const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
-        const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
 
         commonColumnSelect.addEventListener('change', () => {
             const selectedCommonColumn = commonColumnSelect.value;
 
             // Update file columns dropdown to exclude the selected common column
-            Array.from(fileColumnsSelect.options).forEach(option => {
-                if (option.value === selectedCommonColumn) {
-                    option.style.display = 'none'; // Hide the selected common column
-                } else {
-                    option.style.display = ''; // Show other columns
+            fileDropdowns.forEach(otherFileDiv => {
+                if (otherFileDiv !== fileDiv) {
+                    const otherFileId = otherFileDiv.querySelector('input[name="fileIds[]"]').value;
+                    const otherCommonColumnSelect = otherFileDiv.querySelector(`#commonColumn_${otherFileId}`);
+                    const otherSelectedCommonColumn = otherCommonColumnSelect.value;
+
+                    // Show or hide columns based on the current selection
+                    const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
+                    Array.from(fileColumnsSelect.options).forEach(option => {
+                        if (option.value === selectedCommonColumn) {
+                            option.style.display = 'none'; // Hide the selected common column
+                        } else {
+                            option.style.display = ''; // Show other columns
+                        }
+                    });
                 }
-                });
             });
+
+            // Validate form whenever a common column is selected
+            validateForm();
         });
     });
+});
+
+
 </script>
 </x-app-layout>
