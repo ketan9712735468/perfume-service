@@ -29,10 +29,10 @@ class ProjectFileController extends Controller
         $user = Auth::user();
         
         // Get the current team of the user
-        $currentTeam = $user->currentTeam;
+        $team_id = $user->currentTeam->id;
 
         // Ensure the user has a current team and it matches the project's team_id
-        if (!$currentTeam || $currentTeam->id !== $project->team_id) {
+        if ($team_id != $project->team_id) {
             abort(403, 'You do not have access to this project.');
         }
         return view('files.create', compact('project'));
