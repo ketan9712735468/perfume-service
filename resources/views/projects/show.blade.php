@@ -5,6 +5,23 @@
         </h2>
     </x-slot>
 
+    <style>
+        /* Loader styles */
+        .loader {
+            border: 8px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 8px solid #3498db;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -458,9 +475,9 @@
 
             // Validate form whenever a common column is selected
             validateForm();
+            });
         });
     });
-});
 
 
 </script>
