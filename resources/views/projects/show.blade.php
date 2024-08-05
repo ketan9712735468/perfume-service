@@ -38,25 +38,38 @@
 
                                 <!-- Display error messages -->
                                 @if(session('error'))
-                                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded-md shadow-sm">
-                                    <div class="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-3">
+                                <div class="fixed top-4 right-4 max-w-sm w-full bg-red-100 border border-red-400 text-red-700 p-4 mb-4 rounded-md shadow-lg transition-opacity duration-300 ease-in-out opacity-100" role="alert">
+                                    <div class="flex items-start">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-3 text-red-600">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3a1.5 1.5 0 1 1 3 0v12a1.5 1.5 0 1 1-3 0V3zm-1.5 12a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z" />
                                         </svg>
-                                        <p class="text-sm">{{ session('error') }}</p>
+                                        <div class="flex-1">
+                                            <p class="text-sm">{{ session('error') }}</p>
+                                        </div>
+                                        <button type="button" class="ml-3 text-red-600 hover:text-red-800" onclick="this.parentElement.parentElement.style.opacity='0'; setTimeout(() => this.parentElement.parentElement.remove(), 300);">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
                                 @endif
 
-
-                                <!-- Display success messages (optional) -->
+                                <!-- Display success messages -->
                                 @if(session('success'))
-                                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded-md shadow-sm">
-                                    <div class="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-3">
+                                <div class="fixed top-4 right-4 max-w-sm w-full bg-green-100 border border-green-400 text-green-700 p-4 mb-4 rounded-md shadow-lg transition-opacity duration-300 ease-in-out opacity-100" role="alert">
+                                    <div class="flex items-start">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-3 text-green-600">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 4.5l-11.25 11.25-4.5-4.5m-1.5-1.5l6-6L20.25 4.5z" />
                                         </svg>
-                                        <p class="text-sm">{{ session('success') }}</p>
+                                        <div class="flex-1">
+                                            <p class="text-sm">{{ session('success') }}</p>
+                                        </div>
+                                        <button type="button" class="ml-3 text-green-600 hover:text-green-800" onclick="this.parentElement.parentElement.style.opacity='0'; setTimeout(() => this.parentElement.parentElement.remove(), 300);">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
                                 @endif
@@ -248,8 +261,8 @@
 
 <!-- Merge Files Modal -->
 <div id="mergeFilesModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-lg shadow-xl overflow-hidden transform transition-all sm:w-full sm:max-w-2xl">
-        <div class="px-4 py-5 sm:p-6">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-4 py-5 sm:p-6 flex flex-col flex-grow overflow-y-auto">
             <h2 class="text-lg leading-6 font-medium text-gray-900 mb-4">Merge Files</h2>
             @if($project->inventories->isNotEmpty())
                 <!-- If inventory files exist, show the merge form -->
@@ -269,53 +282,55 @@
                     </div>
                 </form>
             @else
-            <div id="validationError" class="text-red-600 mb-4" style="display: none;"></div>
-            <form id="selectFilesForm" method="POST" action="{{ route('projects.files.manualSync', $project) }}" onsubmit="showLoader()">
-                @csrf
-                <div id="filesSelection" class="space-y-4">
-                    @foreach ($fileDetails as $fileDetail)
-                    <div class="mb-6">
-                        <!-- Hidden field for file ID -->
-                        <input type="hidden" name="fileIds[]" value="{{ $fileDetail['id'] }}">
+                <div id="validationError" class="text-red-600 mb-4" style="display: none;"></div>
+                <form id="selectFilesForm" method="POST" action="{{ route('projects.files.manualSync', $project) }}" onsubmit="showLoader()">
+                    @csrf
+                    <div id="filesSelectionContainer" class="mb-6">
+                        <div id="filesSelection" class="space-y-4">
+                            @foreach ($fileDetails as $fileDetail)
+                            <div class="mb-6">
+                                <!-- Hidden field for file ID -->
+                                <input type="hidden" name="fileIds[]" value="{{ $fileDetail['id'] }}">
 
-                        <label for="file_{{ $fileDetail['id'] }}" class="block text-gray-700 mb-2">{{ $fileDetail['original_name'] }}</label>
+                                <label for="file_{{ $fileDetail['id'] }}" class="block text-gray-700 mb-2">{{ $fileDetail['original_name'] }}</label>
 
-                        <div class="mb-4">
-                            <label for="commonColumn_{{ $fileDetail['id'] }}" class="block text-gray-700 mb-2">Select Common Column for {{ $fileDetail['original_name'] }}</label>
-                            <select id="commonColumn_{{ $fileDetail['id'] }}" name="commonColumn[{{ $fileDetail['id'] }}]" class="form-select w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">-- Select Common Column --</option>
-                                @foreach ($fileDetail['columns'] as $column)
-                                <option value="{{ $column }}">{{ $column }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                                <div class="mb-4">
+                                    <label for="commonColumn_{{ $fileDetail['id'] }}" class="block text-gray-700 mb-2">Select Common Column for {{ $fileDetail['original_name'] }}</label>
+                                    <select id="commonColumn_{{ $fileDetail['id'] }}" name="commonColumn[{{ $fileDetail['id'] }}]" class="form-select w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- Select Common Column --</option>
+                                        @foreach ($fileDetail['columns'] as $column)
+                                        <option value="{{ $column }}">{{ $column }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                        <div>
-                            <label for="fileColumns_{{ $fileDetail['id'] }}" class="block text-gray-700 mb-2">Select Columns for {{ $fileDetail['original_name'] }}</label>
-                            <select id="fileColumns_{{ $fileDetail['id'] }}" name="columns[{{ $fileDetail['id'] }}][]" multiple class="form-select w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                @foreach ($fileDetail['columns'] as $column)
-                                <option value="{{ $column }}">{{ $column }}</option>
-                                @endforeach
-                            </select>
+                                <div>
+                                    <label for="fileColumns_{{ $fileDetail['id'] }}" class="block text-gray-700 mb-2">Select Columns for {{ $fileDetail['original_name'] }}</label>
+                                    <select id="fileColumns_{{ $fileDetail['id'] }}" name="columns[{{ $fileDetail['id'] }}][]" multiple class="form-select w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        @foreach ($fileDetail['columns'] as $column)
+                                        <option value="{{ $column }}">{{ $column }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            @endforeach
                         </div>
                     </div>
-                    @endforeach
-                </div>
 
-                <div class="mb-6">
-                    <label for="mergeFileName" class="block text-gray-700 mb-2">File Name</label>
-                    <input type="text" id="mergeFileName" name="mergeFileName" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
+                    <div class="mb-6">
+                        <label for="mergeFileName" class="block text-gray-700 mb-2">File Name</label>
+                        <input type="text" id="mergeFileName" name="mergeFileName" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
 
-                <div class="flex justify-end space-x-4 mt-4">
-                    <button type="button" onclick="closeMergeModal()" class="inline-flex items-center px-4 py-2 mr-4 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
-                        Cancel
-                    </button>
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                        Merge
-                    </button>
-                </div>
-            </form>
+                    <div class="flex justify-end space-x-4 mt-4">
+                        <button type="button" onclick="closeMergeModal()" class="inline-flex items-center px-4 py-2 mr-4 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                            Cancel
+                        </button>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            Merge
+                        </button>
+                    </div>
+                </form>
             @endif
         </div>
     </div>
@@ -387,7 +402,7 @@
             const selectedCommonColumn = commonColumnSelect.value;
 
             if (selectedCommonColumn) {
-                commonColumnValues.add(selectedCommonColumn);
+                commonColumnValues.add(selectedCommonColumn.toLowerCase());
             } else {
                 allSelected = false;
             }
