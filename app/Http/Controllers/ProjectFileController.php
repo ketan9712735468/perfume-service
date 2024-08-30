@@ -203,82 +203,86 @@ class ProjectFileController extends Controller
     {
         // Retrieve the common columns selected
         $commonColumns = $request->input('commonColumn');
-
+    
         // Retrieve the file columns selected
         $fileColumns = $request->input('columns');
         
         // Retrieve the merge file name
         $mergeFileName = $request->input('mergeFileName');
-
+    
         // Prepare the data for the API call
         $data = [
             'commonColumns' => $commonColumns,
             'fileColumns' => $fileColumns,
         ];
-
+    
         Log::info('Data prepared for API call', ['data' => $data]);
-
+    
         // Retrieve the files to attach
         $files = $project->files()->where('enabled', true)->get();
-
-        // Initialize HTTP client
-        $http = Http::asMultipart()->timeout(0);
-
-        // Attach additional data to the request
-        $http->attach('commonColumns', json_encode($data['commonColumns']));
-        $http->attach('fileColumns', json_encode($data['fileColumns']));
-        
-        // Prepare the multipart data
+        $attachments = [];
+    
+        // Prepare file paths and validate existence
         foreach ($files as $file) {
             $filePath = storage_path("app/uploads/projects/" . $file->file);
             Log::debug('Processing file', ['filePath' => $filePath]);
 
+
+            // Check if the file exists before adding to the multipart data
+    
             // Check if the file exists before adding to the multipart data
             if (!file_exists($filePath)) {
                 Log::error('File not found', ['filePath' => $filePath]);
                 return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
                     ->with('error', "File not found: {$filePath}");
             }
-
-            // Attach each file to the request
-            $http->attach(
-                'files', fopen($filePath, 'r'), $file->original_name
-            );
+    
+            $attachments[] = [
+                'filename' => $file->original_name,
+                'content' => base64_encode(file_get_contents($filePath)),
+            ];
         }
-
-        // $flaskApiUrl = 'http://127.0.0.1:5000/manual-upload'; // Local Flask API URL
-        $flaskApiUrl = 'http://16.171.137.198:5000/manual-upload'; // Live Flask API URL
-
+    
+        // Add files to data payload
+        $data['files'] = $attachments;    
         try {
-            // Send the POST request
-            $response = $http->post($flaskApiUrl);
-
+            // API Gateway URL
+            $apiGatewayUrl = 'https://f0587y2u5a.execute-api.eu-north-1.amazonaws.com/default/manualUpload';
+            // $flaskApiUrl = 'http://127.0.0.1:5000/manual-upload'; // Local Flask API URL
+            // $flaskApiUrl = 'http://16.171.137.198:5000/manual-upload'; // Live Flask API URL
+    
+            // Send the POST request to API Gateway
+            $response = Http::post($apiGatewayUrl, $data);
+    
             // Handle the response
             if ($response->successful()) {
                 $fileName = 'projects_' . time() . '_' . Str::random(10) . '.xlsx';
                 Log::info("Extracted Filename", ['fileName' => $fileName]);
-
+    
+                // Decode the file content
+                $fileContent = base64_decode($response->json('fileContent'));
+    
                 // Define the final storage path
                 $finalFilePath = ResultFile::$FOLDER_PATH . '/' . $fileName;
-
+    
                 // Store the file directly in the final storage path
-                Storage::put($finalFilePath, $response->body());
-
+                Storage::put($finalFilePath, $fileContent);
+    
                 // Create a new ResultFile record
                 $resultFile = ResultFile::create([
                     'project_id' => $project->id,
                     'file' => $fileName,
-                    'original_name' => $mergeFileName . '.xlsx'
+                    'original_name' => $mergeFileName . '.xlsx',
                 ]);
-
+    
                 Log::info('File synchronized successfully', ['finalFilePath' => $finalFilePath]);
-
+    
                 return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'results'])
                     ->with('success', 'All files synchronized successfully.');
             } else {
                 Log::error('Failed to synchronize files', ['response' => $response->body()]);
                 return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
-                    ->with('error', 'Failed to synchronize files. ' . $response->body());
+                    ->with('error', 'Failed to synchronize files.');
             }
         } catch (\Exception $e) {
             Log::error('Exception occurred during synchronization', ['exception' => $e->getMessage()]);
