@@ -66,7 +66,7 @@ class ProjectController extends Controller
         }
     
         // Fetch all project files
-        $files = $project->files; // Adjust based on your actual relationship
+        $files = $project->files()->where('enabled', true)->get();; // Adjust based on your actual relationship
     
         // Get columns for each file
         $fileDetails = [];

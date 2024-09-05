@@ -265,12 +265,16 @@
 
 <!-- Excel Preview Modal -->
 <div id="excelPreviewModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-5xl mx-auto w-full">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-gray-900">Excel Preview</h2>
-            <button onclick="closeExcelModal()" class="text-gray-900 hover:text-gray-700">&times;</button>
+            <button onclick="closeExcelModal()" class="text-gray-900 hover:text-gray-700 rounded-full bg-gray-200 p-2 focus:outline-none hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
-        <div id="excelPreviewContent" class="w-full h-96 overflow-auto">
+        <div id="excelPreviewContent" class="w-full h-[600px] overflow-auto">
             <!-- Excel content will be injected here -->
         </div>
     </div>
@@ -441,6 +445,41 @@
         }
     }
 
+    // Function to select default values if available
+    function selectDefaultColumns(fileDiv) {
+        const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
+
+        // Set the default common column (UPC) if it exists
+        const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
+        const commonColumnOptions = Array.from(commonColumnSelect.options);
+        const upcOption = commonColumnOptions.find(option => option.value.toLowerCase() === 'upc');
+        if (upcOption) {
+            commonColumnSelect.value = upcOption.value; // Set UPC as the default selection
+            hideSelectedCommonColumn(fileDiv, upcOption.value); // Hide UPC from file columns
+        }
+
+        // Set the default file column (Price) if it exists
+        const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
+        const fileColumnOptions = Array.from(fileColumnsSelect.options);
+        const priceOption = fileColumnOptions.find(option => option.value.toLowerCase() === 'price');
+        if (priceOption) {
+            priceOption.selected = true; // Select Price by default
+        }
+    }
+
+    // Function to hide selected common column from file-specific columns
+    function hideSelectedCommonColumn(fileDiv, commonColumn) {
+        const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
+        const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
+        Array.from(fileColumnsSelect.options).forEach(option => {
+            if (option.value === commonColumn) {
+                option.style.display = 'none'; // Hide the selected common column
+            } else {
+                option.style.display = ''; // Show other columns
+            }
+        });
+    }
+
     form.addEventListener('submit', (event) => {
         if (!validateForm()) {
             event.preventDefault(); // Prevent form submission if validation fails
@@ -451,32 +490,19 @@
         const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
         const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
 
+        // Automatically select default columns when the page loads
+        selectDefaultColumns(fileDiv);
+
         commonColumnSelect.addEventListener('change', () => {
             const selectedCommonColumn = commonColumnSelect.value;
 
             // Update file columns dropdown to exclude the selected common column
-            fileDropdowns.forEach(otherFileDiv => {
-                if (otherFileDiv !== fileDiv) {
-                    const otherFileId = otherFileDiv.querySelector('input[name="fileIds[]"]').value;
-                    const otherCommonColumnSelect = otherFileDiv.querySelector(`#commonColumn_${otherFileId}`);
-                    const otherSelectedCommonColumn = otherCommonColumnSelect.value;
-
-                    // Show or hide columns based on the current selection
-                    const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
-                    Array.from(fileColumnsSelect.options).forEach(option => {
-                        if (option.value === selectedCommonColumn) {
-                            option.style.display = 'none'; // Hide the selected common column
-                        } else {
-                            option.style.display = ''; // Show other columns
-                        }
-                    });
-                }
-            });
+            hideSelectedCommonColumn(fileDiv, selectedCommonColumn);
 
             // Validate form whenever a common column is selected
             validateForm();
-            });
         });
+    });
     });
 
 
