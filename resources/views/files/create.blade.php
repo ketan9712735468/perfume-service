@@ -152,12 +152,16 @@
 
     <!-- Excel Preview Modal -->
     <div id="excelPreviewModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-7xl mx-auto w-full">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-gray-900">Excel Preview</h2>
-                <button onclick="closeExcelModal()" class="text-gray-900 hover:text-gray-700">&times;</button>
+                <button onclick="closeExcelModal()" class="text-gray-900 hover:text-gray-700 rounded-full bg-gray-200 p-2 focus:outline-none hover:bg-gray-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
-            <div id="excelPreviewContent" class="w-full h-96 overflow-auto">
+            <div id="excelPreviewContent" class="w-full h-[600px] overflow-auto">
                 <!-- Excel content will be injected here -->
             </div>
         </div>
