@@ -446,24 +446,37 @@
     }
 
     // Function to select default values if available
-    function selectDefaultColumns(fileDiv) {
+    function selectDefaultColumns(fileDiv, isFirstFile = false) {
         const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
 
         // Set the default common column (UPC) if it exists
         const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
         const commonColumnOptions = Array.from(commonColumnSelect.options);
         const upcOption = commonColumnOptions.find(option => option.value.toLowerCase() === 'upc');
+        let selectedCommonColumnValue = null;
+
         if (upcOption) {
             commonColumnSelect.value = upcOption.value; // Set UPC as the default selection
-            hideSelectedCommonColumn(fileDiv, upcOption.value); // Hide UPC from file columns
+            selectedCommonColumnValue = upcOption.value;
+            hideSelectedCommonColumn(fileDiv, selectedCommonColumnValue); // Hide UPC from file columns
         }
 
-        // Set the default file column (Price) if it exists
+        // Set all columns as selected for the first file, excluding the common column
         const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
         const fileColumnOptions = Array.from(fileColumnsSelect.options);
-        const priceOption = fileColumnOptions.find(option => option.value.toLowerCase() === 'price');
-        if (priceOption) {
-            priceOption.selected = true; // Select Price by default
+
+        if (isFirstFile) {
+            fileColumnOptions.forEach(option => {
+                if (option.value !== selectedCommonColumnValue) {
+                    option.selected = true; // Select all except the common column
+                }
+            });
+        } else {
+            // Set the default file column (Price) if it exists
+            const priceOption = fileColumnOptions.find(option => option.value.toLowerCase() === 'price');
+            if (priceOption) {
+                priceOption.selected = true; // Select Price by default for non-first files
+            }
         }
     }
 
@@ -486,12 +499,12 @@
         }
     });
 
-    fileDropdowns.forEach(fileDiv => {
+    fileDropdowns.forEach((fileDiv, index) => {
         const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
         const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
 
         // Automatically select default columns when the page loads
-        selectDefaultColumns(fileDiv);
+        selectDefaultColumns(fileDiv, index === 0); // Pass true if it's the first file
 
         commonColumnSelect.addEventListener('change', () => {
             const selectedCommonColumn = commonColumnSelect.value;
@@ -503,7 +516,8 @@
             validateForm();
         });
     });
-    });
+});
+
 
 
 </script>
