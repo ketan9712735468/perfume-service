@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\File;
 use App\Models\ResultFile;
 use Illuminate\Support\Facades\Storage;
+use Aws\Lambda\LambdaClient;
 
 
 class ProjectFileController extends Controller
@@ -210,14 +211,14 @@ class ProjectFileController extends Controller
         // Retrieve the merge file name
         $mergeFileName = $request->input('mergeFileName');
         
-        // Prepare the data for the API call
+        // Prepare the data for the Lambda invocation
         $data = [
             'commonColumns' => $commonColumns,
             'fileColumns' => $fileColumns,
         ];
-        
-        Log::info('Data prepared for API call', ['data' => $data]);
-
+    
+        Log::info('Data prepared for Lambda invocation', ['data' => $data]);
+    
         // Retrieve the files to attach
         $files = $project->files()->where('enabled', true)->get();
         $attachments = [];
@@ -226,37 +227,54 @@ class ProjectFileController extends Controller
         foreach ($files as $file) {
             $filePath = storage_path("app/uploads/projects/" . $file->file);
             Log::debug('Processing file', ['filePath' => $filePath]);
-
+    
             // Check if the file exists before adding to the attachments
             if (!file_exists($filePath)) {
                 Log::error('File not found', ['filePath' => $filePath]);
                 return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
                     ->with('error', "File not found: {$filePath}");
             }
-
+    
             $attachments[] = [
                 'filename' => $file->original_name,
                 'content' => base64_encode(file_get_contents($filePath)),
             ];
         }
-
+    
         // Add files to data payload
         $data['files'] = $attachments;
-        // API Gateway URL
-        $apiGatewayUrl = 'https://f0587y2u5a.execute-api.eu-north-1.amazonaws.com/default/manualUpload';
-
+    
+        // Initialize the AWS Lambda client
+        $lambdaClient = new LambdaClient([
+            'version' => 'latest',
+            'region'  => config('services.aws.region'),
+            'credentials' => [
+                'key'    => config('services.aws.key'),
+                'secret' => config('services.aws.secret'),
+            ],
+        ]);
+    
         try {
-            // Send the POST request to API Gateway
-            $response = Http::timeout(0)
-                ->post($apiGatewayUrl, $data);
+            // Invoke the Lambda function
+            $result = $lambdaClient->invoke([
+                'FunctionName' => 'manualUpload', // Replace with your Lambda function name
+                'InvocationType' => 'RequestResponse',      // 'Event' for async
+                'Payload' => json_encode($data),
+            ]);
+    
+            // Decode the Lambda response
+            $responsePayload = json_decode((string) $result->get('Payload'), true);
+            Log::info('Lambda function response');
 
-            // Handle the response
-            if ($response->successful()) {
+            // Decode the 'body' field
+            $body = json_decode($responsePayload['body'], true); // Parse the body as JSON
+
+            if (isset($body['fileContent'])) {
                 $fileName = 'projects_' . time() . '_' . Str::random(10) . '.xlsx';
                 Log::info("Extracted Filename", ['fileName' => $fileName]);
 
                 // Decode the file content
-                $fileContent = base64_decode($response->json('fileContent'));
+                $fileContent = base64_decode($body['fileContent']);
 
                 // Define the final storage path
                 $finalFilePath = ResultFile::$FOLDER_PATH . '/' . $fileName;
@@ -276,7 +294,7 @@ class ProjectFileController extends Controller
                 return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'results'])
                     ->with('success', 'All files synchronized successfully.');
             } else {
-                Log::error('Failed to synchronize files', ['response' => $response->body()]);
+                Log::error('File content not found in response', ['response' => $responsePayload]);
                 return redirect()->route('projects.show', ['project' => $project->id, 'type' => 'files'])
                     ->with('error', 'Failed to synchronize files.');
             }
