@@ -44,6 +44,7 @@ Route::resource('projects.inventory', ProjectInventoryController::class)->shallo
 Route::resource('projects.resultFiles', ResultFileController::class)->shallow();
 Route::get('/preview-excel/{filename}', [ProjectFileController::class, 'preview'])->name('excel.preview');
 Route::get('/download/{filename}', [ProjectFileController::class, 'download'])->name('download');
+Route::post('/bulk-action/{type}', [ProjectFileController::class, 'bulkAction'])->name('bulk_action');
 Route::get('/preview-result/{filename}', [ResultFileController::class, 'preview'])->name('result.preview');
 Route::get('/download-result/{filename}', [ResultFileController::class, 'download'])->name('result_download');
 Route::post('/projects/{project}/files/sync', [ProjectFileController::class, 'syncAll'])->name('projects.files.syncAll');

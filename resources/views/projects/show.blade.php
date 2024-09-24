@@ -41,16 +41,47 @@
                                     </div>
                                 </div>
 
-                                <!-- Navigation Links -->
-                                <div class="mb-4">
-                                    <a href="{{ route('projects.show', ['project' => $project->id, 'type' => 'files']) }}" 
-                                    class="{{ request('type', 'files') === 'files' ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-700 font-bold py-2 px-4">
-                                        Files
-                                    </a>
-                                    <a href="{{ route('projects.show', ['project' => $project->id, 'type' => 'results']) }}" 
-                                    class="{{ request('type') === 'results' ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-700 font-bold py-2 px-4">
-                                        Results
-                                    </a>
+                                <div class="mb-4 flex items-center justify-between">
+                                    <div class="flex space-x-4">
+                                        <a href="{{ route('projects.show', ['project' => $project->id, 'type' => 'files']) }}" 
+                                        class="{{ request('type', 'files') === 'files' ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-700 font-bold py-2 px-4">
+                                            Files
+                                        </a>
+                                        <a href="{{ route('projects.show', ['project' => $project->id, 'type' => 'results']) }}" 
+                                        class="{{ request('type') === 'results' ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-700 font-bold py-2 px-4">
+                                            Results
+                                        </a>
+                                    </div>
+
+                                    <!-- Bulk Action Buttons -->
+                                    <div class="flex space-x-4">
+                                        <!-- Bulk Enable Button -->
+                                        <form id="bulk-enable-form" method="POST" action="{{ route('bulk_action', ['type' => 'enable']) }}">
+                                            @csrf
+                                            <input type="hidden" name="file_ids" id="enable-file-ids">
+                                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                                Enable
+                                            </button>
+                                        </form>
+
+                                        <!-- Bulk Disable Button -->
+                                        <form id="bulk-disable-form" method="POST" action="{{ route('bulk_action', ['type' => 'disable']) }}">
+                                            @csrf
+                                            <input type="hidden" name="file_ids" id="disable-file-ids">
+                                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                                                Disable
+                                            </button>
+                                        </form>
+
+                                        <!-- Bulk Delete Button -->
+                                        <form id="bulk-delete-form" method="POST" action="{{ route('bulk_action', ['type' => 'delete']) }}">
+                                            @csrf
+                                            <input type="hidden" name="file_ids" id="delete-file-ids">
+                                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
 
                                 <!-- Display error messages -->
@@ -97,6 +128,9 @@
                                         <table class="text-left w-full border-collapse">
                                             <thead>
                                                 <tr>
+                                                <th class="py-4 px-6 bg-gray-100 font-bold uppercase text-sm text-gray-700 border-b border-gray-200">
+                                                    <input type="checkbox" id="select-all">
+                                                </th>
                                                     <th class="py-4 px-6 bg-gray-100 font-bold uppercase text-sm text-gray-700 border-b border-gray-200">File</th>
                                                     <th class="py-4 px-6 bg-gray-100 font-bold uppercase text-sm text-gray-700 border-b border-gray-200">Type</th>
                                                     <th class="py-4 px-6 bg-gray-100 font-bold uppercase text-sm text-gray-700 border-b border-gray-200">Date</th>
@@ -108,6 +142,8 @@
                                                 {{-- For Inventory file only --}}
                                                 @foreach($project->inventories as $inventory)
                                                     <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                                    <td class="py-4 px-6">
+                                                    </td>
                                                         <td class="py-4 px-6">
                                                             <span>{{ $inventory->original_name }}</span>
                                                         </td>
@@ -145,6 +181,9 @@
                                                 {{-- For Project File only --}}
                                                 @foreach($project->files as $file)
                                                     <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                                    <td class="py-4 px-6">
+                                                        <input type="checkbox" name="file_ids[]" value="{{ $file->id }}" class="file-checkbox">
+                                                    </td>
                                                         <td class="py-4 px-6">
                                                             <span>{{ $file->original_name }}</span>
                                                         </td>
@@ -409,116 +448,182 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('selectFilesForm');
-    const fileDropdowns = document.querySelectorAll('#filesSelection .mb-6');
-    const validationError = document.getElementById('validationError');
+        const form = document.getElementById('selectFilesForm');
+        const fileDropdowns = document.querySelectorAll('#filesSelection .mb-6');
+        const validationError = document.getElementById('validationError');
 
-    function validateForm() {
-        const commonColumnValues = new Set();
-        let allSelected = true;
+        function validateForm() {
+            const commonColumnValues = new Set();
+            let allSelected = true;
 
-        fileDropdowns.forEach(fileDiv => {
-            const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
-            const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
-            const selectedCommonColumn = commonColumnSelect.value;
+            fileDropdowns.forEach(fileDiv => {
+                const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
+                const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
+                const selectedCommonColumn = commonColumnSelect.value;
 
-            if (selectedCommonColumn) {
-                commonColumnValues.add(selectedCommonColumn.toLowerCase());
-            } else {
-                allSelected = false;
-            }
-        });
-
-        if (!allSelected) {
-            validationError.textContent = 'Please select a common column for all files.';
-            validationError.style.display = 'block';
-            return false;
-        }
-
-        if (commonColumnValues.size > 1) {
-            validationError.textContent = 'All selected common columns must be the same.';
-            validationError.style.display = 'block';
-            return false;
-        } else {
-            validationError.style.display = 'none';
-            return true;
-        }
-    }
-
-    // Function to select default values if available
-    function selectDefaultColumns(fileDiv, isFirstFile = false) {
-        const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
-
-        // Set the default common column (UPC) if it exists
-        const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
-        const commonColumnOptions = Array.from(commonColumnSelect.options);
-        const upcOption = commonColumnOptions.find(option => option.value.toLowerCase() === 'upc');
-        let selectedCommonColumnValue = null;
-
-        if (upcOption) {
-            commonColumnSelect.value = upcOption.value; // Set UPC as the default selection
-            selectedCommonColumnValue = upcOption.value;
-            hideSelectedCommonColumn(fileDiv, selectedCommonColumnValue); // Hide UPC from file columns
-        }
-
-        // Set all columns as selected for the first file, excluding the common column
-        const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
-        const fileColumnOptions = Array.from(fileColumnsSelect.options);
-
-        if (isFirstFile) {
-            fileColumnOptions.forEach(option => {
-                if (option.value !== selectedCommonColumnValue) {
-                    option.selected = true; // Select all except the common column
+                if (selectedCommonColumn) {
+                    commonColumnValues.add(selectedCommonColumn.toLowerCase());
+                } else {
+                    allSelected = false;
                 }
             });
-        } else {
-            // Set the default file column (Price) if it exists
-            const priceOption = fileColumnOptions.find(option => option.value.toLowerCase() === 'price');
-            if (priceOption) {
-                priceOption.selected = true; // Select Price by default for non-first files
-            }
-        }
-    }
 
-    // Function to hide selected common column from file-specific columns
-    function hideSelectedCommonColumn(fileDiv, commonColumn) {
-        const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
-        const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
-        Array.from(fileColumnsSelect.options).forEach(option => {
-            if (option.value === commonColumn) {
-                option.style.display = 'none'; // Hide the selected common column
+            if (!allSelected) {
+                validationError.textContent = 'Please select a common column for all files.';
+                validationError.style.display = 'block';
+                return false;
+            }
+
+            if (commonColumnValues.size > 1) {
+                validationError.textContent = 'All selected common columns must be the same.';
+                validationError.style.display = 'block';
+                return false;
             } else {
-                option.style.display = ''; // Show other columns
+                validationError.style.display = 'none';
+                return true;
+            }
+        }
+
+        // Function to select default values if available
+        function selectDefaultColumns(fileDiv, isFirstFile = false) {
+            const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
+
+            // Set the default common column (UPC) if it exists
+            const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
+            const commonColumnOptions = Array.from(commonColumnSelect.options);
+            const upcOption = commonColumnOptions.find(option => option.value.toLowerCase() === 'upc');
+            let selectedCommonColumnValue = null;
+
+            if (upcOption) {
+                commonColumnSelect.value = upcOption.value; // Set UPC as the default selection
+                selectedCommonColumnValue = upcOption.value;
+                hideSelectedCommonColumn(fileDiv, selectedCommonColumnValue); // Hide UPC from file columns
+            }
+
+            // Set all columns as selected for the first file, excluding the common column
+            const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
+            const fileColumnOptions = Array.from(fileColumnsSelect.options);
+
+            if (isFirstFile) {
+                fileColumnOptions.forEach(option => {
+                    if (option.value !== selectedCommonColumnValue) {
+                        option.selected = true; // Select all except the common column
+                    }
+                });
+            } else {
+                // Set the default file column (Price) if it exists
+                const priceOption = fileColumnOptions.find(option => option.value.toLowerCase() === 'price');
+                if (priceOption) {
+                    priceOption.selected = true; // Select Price by default for non-first files
+                }
+            }
+        }
+
+        // Function to hide selected common column from file-specific columns
+        function hideSelectedCommonColumn(fileDiv, commonColumn) {
+            const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
+            const fileColumnsSelect = fileDiv.querySelector(`#fileColumns_${fileId}`);
+            Array.from(fileColumnsSelect.options).forEach(option => {
+                if (option.value === commonColumn) {
+                    option.style.display = 'none'; // Hide the selected common column
+                } else {
+                    option.style.display = ''; // Show other columns
+                }
+            });
+        }
+
+        form.addEventListener('submit', (event) => {
+            if (!validateForm()) {
+                event.preventDefault(); // Prevent form submission if validation fails
             }
         });
-    }
 
-    form.addEventListener('submit', (event) => {
-        if (!validateForm()) {
-            event.preventDefault(); // Prevent form submission if validation fails
-        }
-    });
+        fileDropdowns.forEach((fileDiv, index) => {
+            const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
+            const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
 
-    fileDropdowns.forEach((fileDiv, index) => {
-        const fileId = fileDiv.querySelector('input[name="fileIds[]"]').value;
-        const commonColumnSelect = fileDiv.querySelector(`#commonColumn_${fileId}`);
+            // Automatically select default columns when the page loads
+            selectDefaultColumns(fileDiv, index === 0); // Pass true if it's the first file
 
-        // Automatically select default columns when the page loads
-        selectDefaultColumns(fileDiv, index === 0); // Pass true if it's the first file
+            commonColumnSelect.addEventListener('change', () => {
+                const selectedCommonColumn = commonColumnSelect.value;
 
-        commonColumnSelect.addEventListener('change', () => {
-            const selectedCommonColumn = commonColumnSelect.value;
+                // Update file columns dropdown to exclude the selected common column
+                hideSelectedCommonColumn(fileDiv, selectedCommonColumn);
 
-            // Update file columns dropdown to exclude the selected common column
-            hideSelectedCommonColumn(fileDiv, selectedCommonColumn);
-
-            // Validate form whenever a common column is selected
-            validateForm();
+                // Validate form whenever a common column is selected
+                validateForm();
+            });
         });
     });
-});
 
+    document.getElementById('select-all').addEventListener('click', function(event) {
+        const checkboxes = document.querySelectorAll('.file-checkbox');
+        checkboxes.forEach(checkbox => checkbox.checked = event.target.checked);
+    });
 
+    // Add event listener for Enable button
+    document.getElementById('bulk-enable-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        submitFormWithSelectedFiles('enable-file-ids', this);
+    });
 
+    // Add event listener for Enable button
+    document.getElementById('bulk-disable-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        submitFormWithSelectedFiles('disable-file-ids', this);
+    });
+
+    // Add event listener for Delete button
+    document.getElementById('bulk-delete-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        submitFormWithSelectedFiles('delete-file-ids', this);
+    });
+
+    function submitFormWithSelectedFiles(inputId, form) {
+    const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+    if (checkboxes.length === 0) {
+        showCustomAlert('Please select at least one file.');
+        return;
+    }
+    
+    // If there are selected files, continue the form submission
+    const selectedFileIds = Array.from(checkboxes).map(checkbox => checkbox.value);
+    document.getElementById(inputId).value = selectedFileIds.join(',');
+    form.submit();
+}
+
+    function showCustomAlert(message) {
+        // Create the alert container
+        const alertBox = document.createElement('div');
+        alertBox.className = "fixed top-4 right-4 max-w-sm w-full bg-red-100 border border-red-400 text-red-700 p-4 mb-4 rounded-md shadow-lg transition-opacity duration-300 ease-in-out opacity-100";
+        alertBox.setAttribute('role', 'alert');
+
+        // Alert content
+        alertBox.innerHTML = `
+            <div class="flex items-start">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mr-3 text-red-600">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3a1.5 1.5 0 1 1 3 0v12a1.5 1.5 0 1 1-3 0V3zm-1.5 12a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z" />
+                </svg>
+                <div class="flex-1">
+                    <p class="text-sm">${message}</p>
+                </div>
+                <button type="button" class="ml-3 text-red-600 hover:text-red-800" onclick="this.parentElement.parentElement.style.opacity='0'; setTimeout(() => this.parentElement.parentElement.remove(), 300);">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        `;
+
+        // Append the alert box to the body
+        document.body.appendChild(alertBox);
+
+        // Automatically remove the alert after 5 seconds
+        setTimeout(() => {
+            alertBox.style.opacity = '0';
+            setTimeout(() => alertBox.remove(), 300);
+        }, 5000);
+    }
 </script>
 </x-app-layout>

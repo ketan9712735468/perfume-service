@@ -317,4 +317,30 @@ class ProjectFileController extends Controller
         }
         return redirect()->back()->with('error', 'Failed to update file status.');
     }
+
+    public function bulkAction(Request $request, $type)
+    {
+        $fileIds = explode(',', $request->input('file_ids'));
+
+        if (!$fileIds) {
+            return back()->with('error', 'No files selected.');
+        }
+
+        switch ($type) {
+            case 'enable':
+                ProjectFile::whereIn('id', $fileIds)->update(['enabled' => true]);
+                return back()->with('success', 'Selected files have been disabled.');
+            
+            case 'disable':
+                ProjectFile::whereIn('id', $fileIds)->update(['enabled' => false]);
+                return back()->with('success', 'Selected files have been disabled.');
+            
+            case 'delete':
+                ProjectFile::whereIn('id', $fileIds)->delete();
+                return back()->with('success', 'Selected files have been deleted.');
+            
+            default:
+                return back()->with('error', 'Invalid action.');
+        }
+    }
 }
