@@ -329,7 +329,7 @@ class ProjectFileController extends Controller
         switch ($type) {
             case 'enable':
                 ProjectFile::whereIn('id', $fileIds)->update(['enabled' => true]);
-                return back()->with('success', 'Selected files have been disabled.');
+                return back()->with('success', 'Selected files have been enabled.');
             
             case 'disable':
                 ProjectFile::whereIn('id', $fileIds)->update(['enabled' => false]);
