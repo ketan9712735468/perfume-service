@@ -45,7 +45,7 @@
                                                         $latestResultFile = $project->resultFiles->sortByDesc('created_at')->first();
                                                     @endphp
                                                     @if($latestResultFile)
-                                                        <a href="{{ route('result_download', ['filename' => $latestResultFile->file]) }}" class="text-blue-500 hover:text-blue-600">
+                                                        <a href="{{ route('result_download', ['filename' => $latestResultFile->id]) }}" class="text-blue-500 hover:text-blue-600">
                                                             {{ $latestResultFile->original_name }}
                                                         </a>
                                                     @else

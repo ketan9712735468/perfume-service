@@ -60,7 +60,8 @@ class ProjectInventoryController extends Controller
 
     public function download($filename)
     {
-        $path = storage_path('app/uploads/project_inventories/' . $filename);
+        $projectinventory = ProjectInventory::find($filename);
+        $path = storage_path('app/uploads/project_inventories/' . $projectinventory->file);
 
         if (!File::exists($path)) {
             abort(404);
@@ -69,7 +70,7 @@ class ProjectInventoryController extends Controller
         $file = File::get($path);
         $type = File::mimeType($path);
 
-        return response()->download($path, $filename, ['Content-Type' => $type]);
+        return response()->download($path, $projectinventory->original_name, ['Content-Type' => $type]);
     }
 
     public function destroy(ProjectInventory $inventory)

@@ -18,7 +18,8 @@ class ResultFileController extends Controller
 
     public function download($filename)
     {
-        $path = storage_path('app/uploads/results/' . $filename);
+        $resultfile = ResultFile::find($filename);
+        $path = storage_path('app/uploads/results/' . $resultfile->file);
 
         if (!File::exists($path)) {
             abort(404);
@@ -27,7 +28,7 @@ class ResultFileController extends Controller
         $file = File::get($path);
         $type = File::mimeType($path);
 
-        return response()->download($path, $filename, ['Content-Type' => $type]);
+        return response()->download($path, $resultfile->original_name, ['Content-Type' => $type]);
     }
 
     public function preview($filename)

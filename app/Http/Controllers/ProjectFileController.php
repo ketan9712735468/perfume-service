@@ -41,7 +41,8 @@ class ProjectFileController extends Controller
 
     public function download($filename)
     {
-        $path = storage_path('app/uploads/projects/' . $filename);
+        $projectfile = ProjectFile::find($filename);
+        $path = storage_path('app/uploads/projects/' . $projectfile->file);
 
         if (!File::exists($path)) {
             abort(404);
@@ -50,7 +51,7 @@ class ProjectFileController extends Controller
         $file = File::get($path);
         $type = File::mimeType($path);
 
-        return response()->download($path, $filename, ['Content-Type' => $type]);
+        return response()->download($path, $projectfile->original_name, ['Content-Type' => $type]);
     }
 
     public function store(Request $request, Project $project)

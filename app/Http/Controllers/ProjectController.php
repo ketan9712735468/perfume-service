@@ -16,7 +16,9 @@ class ProjectController extends Controller
     public function index()
     {
         $user_team = Auth::user()->currentTeam;
-        $projects = Project::where('team_id', $user_team->id)->get();
+        $projects = Project::where('team_id', $user_team->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
         return view('projects.index', compact('projects'));
     }
 
