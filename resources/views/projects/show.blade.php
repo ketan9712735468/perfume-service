@@ -52,7 +52,7 @@
                                             Results
                                         </a>
                                     </div>
-
+                                    @if(request('type', 'files') === 'files')
                                     <!-- Bulk Action Buttons -->
                                     <div class="flex space-x-4">
                                         <!-- Bulk Enable Button -->
@@ -82,6 +82,7 @@
                                             </button>
                                         </form>
                                     </div>
+                                    @endif
                                 </div>
 
                                 <!-- Display error messages -->

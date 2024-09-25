@@ -21,19 +21,23 @@ class ProjectInventoryController extends Controller
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls'
         ]);
-        Log::debug("$request this is request ");
+        Log::debug("this is request ");
         if ($request->hasFile('file')) {
             $file = $request->file('file');
+            Log::debug("$file _________________27__________________-");
+
 
             $extension = $file->getClientOriginalExtension();
             $originalFileName = $file->getClientOriginalName();
+            Log::debug("$originalFileName ____________________32_______________-");
             $fileName = 'projects_' . time() . '_' . Str::random(10) . '.' . $extension;
             $file->storeAs(ProjectInventory::$FOLDER_PATH, $fileName);
-
+            Log::debug("$file ____________________35_______________-");
             $project->inventories()->create([
                 'file' => $fileName,
                 'original_name' => $originalFileName,
             ]);
+            Log::debug(" ____________________40_______________-");
         }
         
         return response()->json(['status' => 'Files uploaded successfully']);
