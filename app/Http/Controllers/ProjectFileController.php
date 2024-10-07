@@ -115,7 +115,7 @@ class ProjectFileController extends Controller
         $files = $project->files()->where('enabled', true)->get();
         $inventories = $project->inventories()->get();
         // $flaskApiUrl = 'http://127.0.0.1:5000/upload'; // Local Flask API URL
-        $flaskApiUrl = "http://16.171.137.198:5000/upload"; // Live Flask API URL
+        $flaskApiUrl = "http://178.156.139.16:5000/upload"; // Live Flask API URL
         Log::debug('Checked files and mergeFileName', ['mergeFileName' => $mergeFileName, 'fileCount' => $files->count(), 'inventoryCount' => $inventories->count()]);
 
         // Check if there are files and inventories to be sent
